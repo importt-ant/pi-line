@@ -94,7 +94,3 @@ Line(
     on_batch_complete=lambda results: print(f"Batch of {len(results)} finished"),
 )
 ```
-
-## License
-
-MIT
