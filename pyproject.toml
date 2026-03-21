@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pi-line"
+version = "0.1"
+description = "A parallel script runner for Python."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Maximilian Todea", email = "demon.and.max@gmail.com"},
+]
+keywords = ["pipeline", "parallel", "runner", "tasks"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+]
+
+[project.urls]
+Homepage = "https://github.com/maximiliantodea/pi-line"
+Repository = "https://github.com/maximiliantodea/pi-line"
+Issues = "https://github.com/maximiliantodea/pi-line/issues"
+
+[tool.setuptools.packages.find]
+include = ["piline*"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
