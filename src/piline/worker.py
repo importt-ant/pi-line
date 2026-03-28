@@ -8,10 +8,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from piline.pi import Pi, PiResult
+from piline.pi import Pi, Result
 
 
-def execute_pi(pi: Pi, task_dir: Path, artefact_dir: str) -> PiResult:
+def execute_pi(pi: Pi, task_dir: Path, artefact_dir: str) -> Result:
     """Run a Pi as a subprocess and capture its output.
 
     Directory layout::
@@ -75,7 +75,7 @@ def execute_pi(pi: Pi, task_dir: Path, artefact_dir: str) -> PiResult:
     finished_at = datetime.now(timezone.utc)
     duration_s = (finished_at - started_at).total_seconds()
 
-    return PiResult(
+    return Result(
         pi_id=pi.id,
         pi_name=pi.name,
         exit_code=exit_code,

@@ -8,7 +8,7 @@ import threading
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from piline.pi import Pi, PiResult
+from piline.pi import Pi, Result
 
 if TYPE_CHECKING:
     from piline.runner import Runner
@@ -36,8 +36,8 @@ class Line:
         runner: Runner,
         maxsize: int = 0,
         max_results: int = _DEFAULT_MAX_RESULTS,
-        on_batch_complete: Callable[[list[PiResult]], None] | None = None,
-        on_pi_complete: Callable[[PiResult], None] | None = None,
+        on_batch_complete: Callable[[list[Result]], None] | None = None,
+        on_pi_complete: Callable[[Result], None] | None = None,
     ) -> None:
         self._queue: queue.Queue[Pi] = queue.Queue(maxsize=maxsize)
         self._lock = threading.Lock()
@@ -47,7 +47,7 @@ class Line:
         self.max_results = max_results
         self.on_batch_complete = on_batch_complete
         self.on_pi_complete = on_pi_complete
-        self.results: collections.OrderedDict[str, PiResult] = collections.OrderedDict()
+        self.results: collections.OrderedDict[str, Result] = collections.OrderedDict()
         self._consumer_thread: threading.Thread | None = None
         self._stop_event = threading.Event()
 
@@ -88,7 +88,7 @@ class Line:
 
     # ── results ──────────────────────────────────────────────────────
 
-    def get(self, pi_id: str) -> PiResult | None:
+    def get(self, pi_id: str) -> Result | None:
         """Look up a result by *pi_id*, or ``None`` if not found."""
         with self._lock:
             return self.results.get(pi_id)
@@ -99,7 +99,7 @@ class Line:
         with self._lock:
             return len(self.results)
 
-    def drain_results(self) -> dict[str, PiResult]:
+    def drain_results(self) -> dict[str, Result]:
         """Remove and return all stored results, clearing the internal dict."""
         with self._lock:
             drained = dict(self.results)

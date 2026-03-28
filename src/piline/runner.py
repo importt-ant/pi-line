@@ -7,7 +7,7 @@ from concurrent.futures import Future, ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-from piline.pi import Pi, PiResult
+from piline.pi import Pi, Result
 from piline.worker import execute_pi
 
 
@@ -34,16 +34,16 @@ class Runner:
     ) -> None:
         self.base_dir = Path(base_dir)
         self.max_workers = max_workers or os.cpu_count() or 4
-        self.results: list[PiResult] = []
+        self.results: list[Result] = []
 
-    def run(self, pis: list[Pi]) -> list[PiResult]:
+    def run(self, pis: list[Pi]) -> list[Result]:
         """Execute *pis* in parallel and return results."""
         if not pis:
             return []
 
         self.results = []
         max_w = min(self.max_workers, len(pis))
-        futures: dict[Future[PiResult], Pi] = {}
+        futures: dict[Future[Result], Pi] = {}
 
         with ProcessPoolExecutor(max_workers=max_w) as pool:
             for pi in pis:
@@ -58,12 +58,12 @@ class Runner:
 
         return self.results
 
-    def _collect(self, future: Future[PiResult], pi: Pi) -> PiResult:
+    def _collect(self, future: Future[Result], pi: Pi) -> Result:
         try:
             return future.result()
         except Exception as exc:
             task_dir, artefact_dir = pi.resolve_dirs(self.base_dir)
-            return PiResult(
+            return Result(
                 pi_id=pi.id,
                 pi_name=pi.name,
                 exit_code=None,

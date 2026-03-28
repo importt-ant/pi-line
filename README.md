@@ -63,7 +63,7 @@ Pi(
 ## Concepts
 
 - **Pi** — A unit of work. Wraps a script with args, env vars, and an optional timeout. Gets a unique ID on creation. `.py` files run with Python; anything else runs directly.
-- **PiResult** — Outcome of running a Pi. Exit code, timing, paths to stdout/stderr logs and artefacts.
+- **Result** — Outcome of running a Pi. Exit code, timing, paths to stdout/stderr logs and artefacts.
 - **Runner** — Executes a batch of Pi's in parallel using `ProcessPoolExecutor`.
 - **Line** — Thread-safe queue that feeds Pi's to a Runner in batches. Results stored in a capped dict keyed by `pi_id`. Supports context manager, per-Pi and per-batch callbacks, and `drain_results()` for periodic flushing.
 

@@ -39,7 +39,7 @@ class Pi:
 
 
 @dataclass
-class PiResult:
+class Result:
     """Outcome of executing a single Pi."""
 
     pi_id: str
