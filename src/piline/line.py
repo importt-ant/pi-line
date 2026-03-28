@@ -210,7 +210,9 @@ class Line:
             raise RuntimeError("Consumer is already running")
         self._stop_event.clear()
         self._consumer_thread = threading.Thread(
-            target=self._consume_loop, daemon=True, name="qu-consumer",
+            target=self._consume_loop,
+            daemon=True,
+            name="qu-consumer",
         )
         self._consumer_thread.start()
 
