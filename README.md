@@ -94,3 +94,7 @@ Line(
     on_batch_complete=lambda results: print(f"Batch of {len(results)} finished"),
 )
 ```
+
+## API reference
+
+See [docs/index.md](docs/index.md).
