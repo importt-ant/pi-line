@@ -38,6 +38,7 @@ Repository = "https://github.com/maximiliantodea/pi-line"
 Issues = "https://github.com/maximiliantodea/pi-line/issues"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["piline*"]
 
 [tool.ruff]
