@@ -24,7 +24,7 @@ class Pi:
     args: list[str] = field(default_factory=list)
     env: dict[str, str] = field(default_factory=dict)
     timeout: int | None = None
-    id: str = field(default_factory=_new_id)
+    id: str = field(default_factory=_new_id, init=False)
 
     def __repr__(self) -> str:
         return f"Pi(name={self.name!r}, id={self.id!r})"
