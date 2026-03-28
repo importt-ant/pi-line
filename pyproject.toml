@@ -38,7 +38,11 @@ Repository = "https://github.com/maximiliantodea/pi-line"
 Issues = "https://github.com/maximiliantodea/pi-line/issues"
 
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["piline*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
 
 [tool.ruff]
 target-version = "py310"

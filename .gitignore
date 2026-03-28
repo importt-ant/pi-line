@@ -35,3 +35,6 @@ Thumbs.db
 
 # Environment
 .env
+
+.github
+generate_docs.py
