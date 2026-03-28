@@ -37,4 +37,4 @@ Thumbs.db
 .env
 
 .github
-update-docs.sh
+generate_docs.py
