@@ -1,4 +1,4 @@
-# pi-line
+# 🥧〽️❗: pi-line
 
 A zero-dependency parallel script runner for Python.
 
