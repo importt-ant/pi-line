@@ -1,4 +1,4 @@
-"""Runner — parallel Pi executor."""
+"""Parallel Pi executor using ProcessPoolExecutor."""
 
 from __future__ import annotations
 
@@ -12,19 +12,31 @@ from piline.worker import execute_pi
 
 
 class Runner:
-    """Executes a list of Pi's in parallel.
+    """Runs a batch of Pi's in parallel using a process pool.
 
-    Output layout::
+    Each Pi gets its own output directory under *base_dir*:
+    ``<base_dir>/<pi_name>/<pi_id>/``, containing ``stdout.log``,
+    ``stderr.log``, and an ``artefact/`` subdirectory.
 
-        <base_dir>/<pi_name>/<pi_id>/
-            stdout.log
-            stderr.log
-            artefact/        # scripts write artifacts here
+    ``results`` is reset on every call to :meth:`run`.
 
-    Usage::
+    Example::
 
-        runner = Runner()
-        results = runner.run([Pi(name="a", script="a.py")])
+        runner = Runner(base_dir="/tmp/runs", max_workers=4)
+        results = runner.run([
+            Pi(name="train", script="train.py"),
+            Pi(name="eval", script="eval.py"),
+        ])
+        for r in results:
+            print(r.pi_name, r.succeeded)
+
+    Parameters
+    ----------
+    base_dir:
+        Root directory for task output.  Defaults to ``.piline/runs``.
+    max_workers:
+        Maximum number of parallel processes.  Defaults to
+        ``os.cpu_count()``, falling back to 4.
     """
 
     def __init__(
@@ -37,7 +49,22 @@ class Runner:
         self.results: list[Result] = []
 
     def run(self, pis: list[Pi]) -> list[Result]:
-        """Execute *pis* in parallel and return results."""
+        """Execute *pis* in parallel and return one Result per Pi.
+
+        Clears ``self.results`` before starting. The number of worker
+        processes is capped at ``min(max_workers, len(pis))`` so short
+        lists don't spawn idle processes.
+
+        Parameters
+        ----------
+        pis:
+            Pi's to execute.  An empty list returns ``[]`` immediately.
+
+        Returns
+        -------
+        list[Result]
+            One Result per Pi, in completion order (not input order).
+        """
         if not pis:
             return []
 
@@ -59,6 +86,27 @@ class Runner:
         return self.results
 
     def _collect(self, future: Future[Result], pi: Pi) -> Result:
+        """Return the Result from a completed future, or a crash Result on error.
+
+        Wraps the future's result in a try/except so that worker crashes
+        do not propagate as unhandled exceptions — they are captured as a
+        ``Result`` with ``exit_code=None`` and a descriptive
+        ``error_message`` instead, keeping the rest of the batch intact.
+
+        Parameters
+        ----------
+        future:
+            A completed future returned by the process pool.
+        pi:
+            The Pi that the future was executing.  Used to populate the
+            failure Result when an exception is caught.
+
+        Returns
+        -------
+        Result
+            The Result produced by the worker, or a synthetic failure
+            Result if the worker process raised an exception.
+        """
         try:
             return future.result()
         except Exception as exc:
