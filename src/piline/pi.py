@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -78,6 +79,66 @@ class Pi:
         task_dir = Path(base_dir) / self.name / self.id
         return task_dir, task_dir / "artefact"
 
+    def to_dict(self) -> dict:
+        """Serialise this Pi to a plain dict.
+
+        The returned dict includes the auto-generated ``id`` so that
+        a round-trip through :meth:`from_dict` restores an identical
+        instance.
+
+        Returns
+        -------
+        dict
+            JSON-serialisable dictionary.
+        """
+        return {
+            "name": self.name,
+            "script": self.script,
+            "args": list(self.args),
+            "env": dict(self.env),
+            "timeout": self.timeout,
+            "id": self.id,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Pi:
+        """Create a Pi from a dict (e.g. one produced by :meth:`to_dict`).
+
+        If the dict contains an ``id`` key the original ID is restored;
+        otherwise a new one is generated.
+
+        Parameters
+        ----------
+        data:
+            Dictionary with at least ``name`` and ``script`` keys.
+
+        Returns
+        -------
+        Pi
+        """
+        pi = cls(
+            name=data["name"],
+            script=data["script"],
+            args=data.get("args", []),
+            env=data.get("env", {}),
+            timeout=data.get("timeout"),
+        )
+        if "id" in data:
+            object.__setattr__(pi, "id", data["id"])
+        return pi
+
+    def to_json(self, **kwargs: object) -> str:
+        """Serialise this Pi to a JSON string.
+
+        Extra keyword arguments are forwarded to :func:`json.dumps`.
+        """
+        return json.dumps(self.to_dict(), **kwargs)
+
+    @classmethod
+    def from_json(cls, s: str) -> Pi:
+        """Create a Pi from a JSON string."""
+        return cls.from_dict(json.loads(s))
+
 
 @dataclass
 class Result:
@@ -134,3 +195,75 @@ class Result:
     def succeeded(self) -> bool:
         """``True`` when exit_code is 0 and the Pi did not time out."""
         return self.exit_code == 0 and not self.timed_out
+
+    def to_dict(self) -> dict:
+        """Serialise this Result to a plain dict.
+
+        Datetime fields are stored as ISO 8601 strings (UTC).
+
+        Returns
+        -------
+        dict
+            JSON-serialisable dictionary.
+        """
+        return {
+            "pi_id": self.pi_id,
+            "pi_name": self.pi_name,
+            "exit_code": self.exit_code,
+            "started_at": self.started_at.isoformat(),
+            "finished_at": self.finished_at.isoformat() if self.finished_at else None,
+            "duration_s": self.duration_s,
+            "task_dir": self.task_dir,
+            "artefact_dir": self.artefact_dir,
+            "error_message": self.error_message,
+            "timed_out": self.timed_out,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Result:
+        """Create a Result from a dict (e.g. one produced by :meth:`to_dict`).
+
+        ISO 8601 datetime strings are parsed back into ``datetime``
+        objects.
+
+        Parameters
+        ----------
+        data:
+            Dictionary with at least ``pi_id`` and ``pi_name`` keys.
+
+        Returns
+        -------
+        Result
+        """
+        started_at = data.get("started_at")
+        if isinstance(started_at, str):
+            started_at = datetime.fromisoformat(started_at)
+
+        finished_at = data.get("finished_at")
+        if isinstance(finished_at, str):
+            finished_at = datetime.fromisoformat(finished_at)
+
+        return cls(
+            pi_id=data["pi_id"],
+            pi_name=data["pi_name"],
+            exit_code=data.get("exit_code"),
+            started_at=started_at or datetime.now(timezone.utc),
+            finished_at=finished_at,
+            duration_s=data.get("duration_s"),
+            task_dir=data.get("task_dir"),
+            artefact_dir=data.get("artefact_dir"),
+            error_message=data.get("error_message"),
+            timed_out=data.get("timed_out", False),
+        )
+
+    def to_json(self, **kwargs: object) -> str:
+        """Serialise this Result to a JSON string.
+
+        Extra keyword arguments are forwarded to :func:`json.dumps`.
+        """
+        return json.dumps(self.to_dict(), **kwargs)
+
+    @classmethod
+    def from_json(cls, s: str) -> Result:
+        """Create a Result from a JSON string."""
+        return cls.from_dict(json.loads(s))

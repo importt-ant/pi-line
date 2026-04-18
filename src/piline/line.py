@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import collections
+import json
 import queue
 import threading
 from collections.abc import Callable
@@ -295,3 +296,65 @@ class Line:
             except queue.Empty:
                 break
         return batch
+
+    def to_dict(self) -> dict:
+        """Serialise Line configuration and stored results to a dict.
+
+        Runtime state (thread, queue contents, callbacks) is not
+        included — only the settings needed to reconstruct an
+        equivalent Line and any results collected so far.
+
+        Returns
+        -------
+        dict
+            JSON-serialisable dictionary.
+        """
+        with self._lock:
+            results = {pid: r.to_dict() for pid, r in self.results.items()}
+        return {
+            "runner": self.runner.to_dict(),
+            "maxsize": self._queue.maxsize,
+            "max_results": self.max_results,
+            "results": results,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Line:
+        """Create a Line from a dict (e.g. one produced by :meth:`to_dict`).
+
+        Callbacks cannot be serialised and must be re-attached after
+        construction.  Stored results are restored into the new
+        instance.
+
+        Parameters
+        ----------
+        data:
+            Dictionary with at least a ``runner`` key.
+
+        Returns
+        -------
+        Line
+        """
+        from piline.runner import Runner
+
+        runner = Runner.from_dict(data["runner"])
+        line = cls(
+            runner=runner,
+            maxsize=data.get("maxsize", 0),
+            max_results=data.get("max_results", _DEFAULT_MAX_RESULTS),
+        )
+        for pid, rd in data.get("results", {}).items():
+            line.results[pid] = Result.from_dict(rd)
+        return line
+
+    def to_json(self, **kwargs: object) -> str:
+        """Serialise this Line to a JSON string.
+
+        Extra keyword arguments are forwarded to :func:`json.dumps`.
+        """
+        return json.dumps(self.to_dict(), **kwargs)
+
+    @classmethod
+    def from_json(cls, s: str) -> Line:
+        """Create a Line from a JSON string."""
+        return cls.from_dict(json.loads(s))
