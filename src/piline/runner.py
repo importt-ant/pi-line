@@ -8,7 +8,8 @@ from concurrent.futures import Future, ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-from piline.pi import Pi, Result
+from piline.pi import Pi
+from piline.result import Result
 from piline.worker import execute_pi
 
 

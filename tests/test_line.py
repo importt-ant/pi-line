@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import time
+import warnings
 from pathlib import Path
 
 from piline.line import Line
-from piline.pi import Pi, Result
+from piline.pi import Pi
+from piline.result import Result
 from piline.runner import Runner
 
 
@@ -23,12 +25,26 @@ class TestLineEnqueue:
         assert pi_id == pi.id
 
     def test_put_many(self, run_dir: Path, pass_script: str) -> None:
-        """put_many() returns a list of IDs matching the input Pi's."""
+        """put_many() returns a list of IDs and emits a deprecation warning."""
         runner = Runner(base_dir=run_dir, max_workers=1)
         line = Line(runner)
         pis = [Pi(name=f"j{i}", script=pass_script) for i in range(3)]
 
-        ids = line.put_many(pis)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            ids = line.put_many(pis)
+            assert ids == [p.id for p in pis]
+            assert len(w) == 1
+            assert issubclass(w[0].category, DeprecationWarning)
+            assert "put_many" in str(w[0].message)
+
+    def test_put_list(self, run_dir: Path, pass_script: str) -> None:
+        """put() accepts a list and returns a list of IDs."""
+        runner = Runner(base_dir=run_dir, max_workers=1)
+        line = Line(runner)
+        pis = [Pi(name=f"l{i}", script=pass_script) for i in range(3)]
+
+        ids = line.put(pis)
         assert ids == [p.id for p in pis]
 
     def test_size_and_empty(self, run_dir: Path, pass_script: str) -> None:
@@ -82,7 +98,7 @@ class TestLineConsumer:
         runner = Runner(base_dir=run_dir, max_workers=2)
         with Line(runner) as line:
             pis = [Pi(name=f"rc{i}", script=pass_script) for i in range(3)]
-            line.put_many(pis)
+            line.put(pis)
             _wait_for_results(line, 3)
 
             assert line.result_count == 3
@@ -92,7 +108,7 @@ class TestLineConsumer:
         runner = Runner(base_dir=run_dir, max_workers=2)
         with Line(runner) as line:
             pis = [Pi(name=f"b{i}", script=pass_script) for i in range(5)]
-            line.put_many(pis)
+            line.put(pis)
             _wait_for_results(line, 5)
 
             assert line.result_count == 5
@@ -145,7 +161,7 @@ class TestLineCallbacks:
 
         with Line(runner, on_pi_complete=lambda r: completed.append(r)) as line:
             pis = [Pi(name=f"cb{i}", script=pass_script) for i in range(3)]
-            line.put_many(pis)
+            line.put(pis)
             _wait_for_results(line, 3)
 
         assert len(completed) == 3
@@ -160,7 +176,7 @@ class TestLineCallbacks:
             runner, on_batch_complete=lambda b: batches.append(b)
         ) as line:
             pis = [Pi(name=f"bc{i}", script=pass_script) for i in range(3)]
-            line.put_many(pis)
+            line.put(pis)
             _wait_for_results(line, 3)
 
         total = sum(len(b) for b in batches)
@@ -175,7 +191,7 @@ class TestLineEviction:
         runner = Runner(base_dir=run_dir, max_workers=2)
         with Line(runner, max_results=3) as line:
             pis = [Pi(name=f"ev{i}", script=pass_script) for i in range(6)]
-            line.put_many(pis)
+            line.put(pis)
             _wait_for_results(line, 6, max_stored=3)
 
             assert line.result_count <= 3
@@ -185,7 +201,7 @@ class TestLineEviction:
         runner = Runner(base_dir=run_dir, max_workers=2)
         with Line(runner) as line:
             pis = [Pi(name=f"dr{i}", script=pass_script) for i in range(3)]
-            line.put_many(pis)
+            line.put(pis)
             _wait_for_results(line, 3)
 
             drained = line.drain_results()
