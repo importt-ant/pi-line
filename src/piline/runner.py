@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 from concurrent.futures import Future, ProcessPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -122,3 +123,54 @@ class Runner:
                 artefact_dir=str(artefact_dir),
                 error_message=f"Worker crashed: {exc}",
             )
+
+    def to_dict(self) -> dict:
+        """Serialise Runner configuration (and results) to a dict.
+
+        Returns
+        -------
+        dict
+            JSON-serialisable dictionary containing ``base_dir``,
+            ``max_workers``, and any stored ``results``.
+        """
+        return {
+            "base_dir": str(self.base_dir),
+            "max_workers": self.max_workers,
+            "results": [r.to_dict() for r in self.results],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Runner:
+        """Create a Runner from a dict (e.g. one produced by :meth:`to_dict`).
+
+        Stored results, if present, are restored onto the instance.
+
+        Parameters
+        ----------
+        data:
+            Dictionary with at least ``base_dir`` and ``max_workers``
+            keys.
+
+        Returns
+        -------
+        Runner
+        """
+        runner = cls(
+            base_dir=data.get("base_dir", ".piline/runs"),
+            max_workers=data.get("max_workers"),
+        )
+        for rd in data.get("results", []):
+            runner.results.append(Result.from_dict(rd))
+        return runner
+
+    def to_json(self, **kwargs: object) -> str:
+        """Serialise this Runner to a JSON string.
+
+        Extra keyword arguments are forwarded to :func:`json.dumps`.
+        """
+        return json.dumps(self.to_dict(), **kwargs)
+
+    @classmethod
+    def from_json(cls, s: str) -> Runner:
+        """Create a Runner from a JSON string."""
+        return cls.from_dict(json.loads(s))
