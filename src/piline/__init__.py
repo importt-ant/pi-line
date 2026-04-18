@@ -19,4 +19,4 @@ from piline.runner import Runner
 
 __all__ = ["Line", "Pi", "Result", "Runner"]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

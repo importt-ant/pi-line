@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pi-line"
-version = "1.0.0"
+version = "1.1.0"
 description = "Zero-dependency parallel script runner."
 readme = "README.md"
 license = {text = "MIT"}
