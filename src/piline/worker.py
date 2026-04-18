@@ -8,7 +8,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from piline.pi import Pi, Result
+from piline.pi import Pi
+from piline.result import Result
 
 
 def execute_pi(pi: Pi, task_dir: Path, artefact_dir: str) -> Result:

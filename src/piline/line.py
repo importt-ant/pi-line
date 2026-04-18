@@ -6,10 +6,12 @@ import collections
 import json
 import queue
 import threading
+import warnings
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from piline.pi import Pi, Result
+from piline.pi import Pi
+from piline.result import Result
 
 if TYPE_CHECKING:
     from piline.runner import Runner
@@ -86,22 +88,25 @@ class Line:
 
     # ── enqueue ──────────────────────────────────────────────────────
 
-    def put(self, pi: Pi) -> str:
-        """Add a Pi to the queue.
+    def put(self, pi: Pi | list[Pi]) -> str | list[str]:
+        """Add one or more Pi's to the queue.
 
-        If the consumer is running, the Pi will be picked up and
-        executed in the next batch.
+        Accepts a single Pi or a list.  If the consumer is running,
+        enqueued Pi's will be picked up and executed in the next batch.
 
         Parameters
         ----------
         pi:
-            The Pi to enqueue.
+            A single Pi or a list of Pi's to enqueue.
 
         Returns
         -------
-        str
-            The Pi's unique ID, for later lookup via :meth:`get`.
+        str | list[str]
+            The Pi's unique ID when given a single Pi, or a list of
+            IDs (in the same order) when given a list.
         """
+        if isinstance(pi, list):
+            return [self.put(p) for p in pi]
         self._queue.put(pi)
         with self._lock:
             self._total_enqueued += 1
@@ -109,6 +114,10 @@ class Line:
 
     def put_many(self, pis: list[Pi]) -> list[str]:
         """Add several Pi's to the queue at once.
+
+        .. deprecated::
+            Use :meth:`put` with a list instead.  Will be removed in
+            the next major release.
 
         Parameters
         ----------
@@ -120,7 +129,15 @@ class Line:
         list[str]
             IDs of the enqueued Pi's, in the same order as *pis*.
         """
-        return [self.put(p) for p in pis]
+        # TODO: remove put_many in next major release
+        warnings.warn(
+            "put_many() is deprecated — pass a list to put() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        ids = self.put(pis)
+        assert isinstance(ids, list)
+        return ids
 
     @property
     def size(self) -> int:

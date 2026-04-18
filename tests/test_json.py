@@ -7,7 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from piline.line import Line
-from piline.pi import Pi, Result
+from piline.pi import Pi
+from piline.result import Result
 from piline.runner import Runner
 
 

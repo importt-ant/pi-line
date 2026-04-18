@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from piline.pi import Pi, Result
+from piline.pi import Pi
+from piline.result import Result
 
 
 class TestPi:
